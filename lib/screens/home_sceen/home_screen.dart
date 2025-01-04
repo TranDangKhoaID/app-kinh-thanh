@@ -2,12 +2,13 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:app_kinh_thanh/common/share_color.dart';
-import 'package:app_kinh_thanh/models/bible_model.dart';
+import 'package:app_kinh_thanh/controller/network_controller.dart';
 import 'package:app_kinh_thanh/screens/home_sceen/controller/home_controller.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:just_audio/just_audio.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,177 +18,100 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
+  //
+  //
+  final GlobalKey<ScaffoldState> _globalKey = GlobalKey();
   DateTime _date = DateTime(
     DateTime.now().year,
     DateTime.now().month,
     DateTime.now().day,
   );
+  //audio
+  final player = AudioPlayer();
+  Duration position = Duration.zero;
+  Duration duration = Duration.zero;
+
+  String formatDuration(Duration d) {
+    final minutes = d.inMinutes.remainder(60);
+    final secound = d.inSeconds.remainder(60);
+    return "${minutes.toString().padLeft(2, '0')}:${secound.toString().padLeft(2, '0')}";
+  }
+
+  void handlePlayPause() {
+    if (player.playing) {
+      player.pause();
+    } else {
+      player.play();
+    }
+  }
+
+  void handleSeek(double value) {
+    player.seek(Duration(seconds: value.toInt()));
+  }
 
   //controller
   final _controller = Get.put(HomeController());
+  final _controllerConnect = Get.find<NetworkController>();
+  //
+  double _fontSize = 16;
+  bool _showSlider = false;
+  bool _showAudio = false;
   //
   @override
-  FutureOr<void> afterFirstLayout(BuildContext context) {
-    _controller.getBibles(_date);
+  FutureOr<void> afterFirstLayout(BuildContext context) async {
+    await _controller.getBibles(_date);
+    final url = _controller.bible.value.audio ?? '';
+    url.isNotEmpty
+        ? player.setUrl(url)
+        : player.setAsset('assets/audio/empty.mp3');
+    player.positionStream.listen(
+      (p) {
+        setState(() => position = p);
+      },
+    );
+    player.durationStream.listen(
+      (d) {
+        setState(() => duration = d!);
+      },
+    );
+    player.playerStateStream.listen(
+      (state) {
+        if (state.processingState == ProcessingState.completed) {
+          setState(() {
+            position = Duration.zero;
+          });
+          player.pause();
+          player.seek(position);
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _globalKey,
       backgroundColor: ShareColors.kWhite,
       appBar: _buildAppbar(),
       drawer: _buildDrawer(),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                alignment: Alignment.center,
-                child: Text(
-                  'Ngày ${DateFormat('dd/MM/yyyy').format(_date)}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    //fontWeight: FontWeight.bold,
-                  ),
+      body: Obx(
+        () => _controllerConnect.isConnected.value
+            ? _buildBody()
+            : const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.wifi_off, size: 80),
+                    Text('Lỗi kết nối mạng!'),
+                  ],
                 ),
               ),
-              Obx(
-                () {
-                  //final bibleModel = _controller.getCurrentBible(_date);
-                  if (_controller.isLoading.value) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                  // if (_controller.bible.value) {
-                  //   return Center(child: Text('No bibles available'));
-                  // }
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
-                    child: Column(
-                      children: [
-                        Container(
-                          alignment: Alignment.center,
-                          child: Text(
-                            '${_controller.bible.value.title}',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Kinh thánh: ',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              TextSpan(
-                                text: _controller.bible.value.bible ?? "",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Câu gốc: ',
-                                style: TextStyle(
-                                  fontStyle: FontStyle.italic,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              TextSpan(
-                                text: _controller.bible.value.original ?? "",
-                                style: TextStyle(
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Câu hỏi suy ngẫm: ',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              TextSpan(
-                                text: _controller.bible.value.thought ?? "",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Cầu nguyện: ',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              TextSpan(
-                                text: _controller.bible.value.pray ?? "",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Đọc kinh thánh trong ba năm: ',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              TextSpan(
-                                text: _controller.bible.value.end ?? "",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              )
-            ],
-          ),
-        ),
       ),
       bottomNavigationBar: Container(
         color: ShareColors.kPrimaryColor,
@@ -196,18 +120,27 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             IconButton(
-              onPressed: () {
+              onPressed: () async {
                 setState(() {
+                  _showAudio = false;
                   _date = (_date.subtract(const Duration(days: 1)));
-                  _controller.getBibles(_date);
                 });
+                await _controller.getBibles(_date);
+                final newUrl = _controller.bible.value.audio ?? '';
+                newUrl.isNotEmpty
+                    ? player.setUrl(newUrl)
+                    : player.setAsset('assets/audio/empty.mp3');
               },
               icon: const Icon(
                 Icons.arrow_back_ios_outlined,
               ),
             ),
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                setState(() {
+                  _showAudio = !_showAudio;
+                });
+              },
               icon: const Icon(
                 Icons.play_circle_outline,
               ),
@@ -221,11 +154,16 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
               ),
             ),
             IconButton(
-              onPressed: () {
+              onPressed: () async {
                 setState(() {
+                  _showAudio = false;
                   _date = (_date.add(const Duration(days: 1)));
-                  _controller.getBibles(_date);
                 });
+                await _controller.getBibles(_date);
+                final newUrl = _controller.bible.value.audio ?? '';
+                newUrl.isNotEmpty
+                    ? player.setUrl(newUrl)
+                    : player.setAsset('assets/audio/empty.mp3');
               },
               icon: const Icon(
                 Icons.arrow_forward_ios_outlined,
@@ -234,6 +172,236 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
           ],
         ),
       ),
+    );
+  }
+
+  Stack _buildBody() {
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Ngày ${DateFormat('dd/MM/yyyy').format(_date)}',
+                    style: TextStyle(
+                      fontSize: _fontSize + 1,
+                    ),
+                  ),
+                ),
+                Obx(
+                  () {
+                    //final bibleModel = _controller.getCurrentBible(_date);
+                    if (_controller.isLoading.value) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                    // if (_controller.bible.value) {
+                    //   return Center(child: Text('No bibles available'));
+                    // }
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: Column(
+                        children: [
+                          Container(
+                            alignment: Alignment.center,
+                            child: Text(
+                              '${_controller.bible.value.title}',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: _fontSize + 5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Kinh thánh: ',
+                                  style: TextStyle(
+                                    fontSize: _fontSize,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: _controller.bible.value.bible ?? "",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: _fontSize,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Câu gốc: ',
+                                  style: TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    fontSize: _fontSize,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: _controller.bible.value.original ?? "",
+                                  style: TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.black,
+                                    fontSize: _fontSize,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Câu hỏi suy ngẫm: ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    fontSize: _fontSize,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: _controller.bible.value.thought ?? "",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: _fontSize,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Cầu nguyện: ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    fontSize: _fontSize,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: _controller.bible.value.pray ?? "",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: _fontSize,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Đọc kinh thánh trong ba năm: ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    fontSize: _fontSize,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: _controller.bible.value.end ?? "",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: _fontSize,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                )
+              ],
+            ),
+          ),
+        ),
+        // Thanh slider cố định
+        if (_showSlider)
+          Positioned(
+            top: 20, // Dưới app bar
+            left: 0,
+            right: 0,
+            child: Container(
+              color: Colors.blue, // Nền màu để slider nổi bật
+              margin: EdgeInsets.all(10),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Slider(
+                value: _fontSize,
+                min: 10,
+                max: 50,
+                divisions: 40,
+                label: _fontSize.toStringAsFixed(0),
+                onChanged: (double value) {
+                  setState(() {
+                    _fontSize = value;
+                  });
+                },
+              ),
+            ),
+          ),
+        if (_showAudio)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 20,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: EdgeInsets.all(10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 20,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: handlePlayPause,
+                    icon: Icon(
+                      player.playing ? Icons.pause : Icons.play_arrow,
+                      size: 50,
+                    ),
+                  ),
+                  Text(formatDuration(position)),
+                  Slider(
+                    min: 0.0,
+                    max: duration.inSeconds.toDouble(),
+                    value: position.inSeconds.toDouble(),
+                    onChanged: handleSeek,
+                  ),
+                  Text(formatDuration(duration)),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -317,7 +485,11 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
           ),
         ),
         IconButton(
-          onPressed: () {},
+          onPressed: () {
+            setState(() {
+              _showSlider = !_showSlider;
+            });
+          },
           icon: const Icon(
             Icons.zoom_in,
           ),

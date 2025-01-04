@@ -34,7 +34,7 @@ class _RestClient implements RestClient {
     )
         .compose(
           _dio.options,
-          '/rest/v1/bible?select=*',
+          '/rest/v1/bibles?select=*',
           queryParameters: queryParameters,
           data: _data,
         )

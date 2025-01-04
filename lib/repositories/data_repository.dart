@@ -16,7 +16,7 @@ class DataRepository implements RestClient {
     if (kDebugMode) {
       dio.interceptors.add(LogInterceptor(
         requestBody: true,
-        responseBody: false,
+        responseBody: true,
         error: true,
       ));
     }

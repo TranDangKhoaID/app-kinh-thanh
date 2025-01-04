@@ -9,6 +9,6 @@ abstract class RestClient {
   /// MARK: - Initials;
   factory RestClient(Dio dio, {String baseUrl}) = _RestClient;
 
-  @GET('/rest/v1/bible?select=*')
+  @GET('/rest/v1/bibles?select=*')
   Future<List<BibleModel>> getBibles();
 }
