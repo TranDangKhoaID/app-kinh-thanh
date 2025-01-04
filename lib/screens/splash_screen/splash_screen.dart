@@ -18,7 +18,7 @@ class _SplashScreenState extends State<SplashScreen> with AfterLayoutMixin {
     return Scaffold(
       body: Container(
         alignment: Alignment.center,
-        child: Text('Kinh thanhs DATA'),
+        child: const Text('Kinh thanhs DATA'),
       ),
     );
   }

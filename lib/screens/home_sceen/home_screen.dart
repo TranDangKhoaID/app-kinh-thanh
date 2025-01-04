@@ -107,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.wifi_off, size: 80),
+                    Icon(Icons.wifi_off, size: 80),
                     Text('Lỗi kết nối mạng!'),
                   ],
                 ),
@@ -348,7 +348,7 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
             right: 0,
             child: Container(
               color: Colors.blue, // Nền màu để slider nổi bật
-              margin: EdgeInsets.all(10),
+              margin: const EdgeInsets.all(10),
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Slider(
                 value: _fontSize,
@@ -374,7 +374,7 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
                 color: Colors.grey,
                 borderRadius: BorderRadius.circular(10),
               ),
-              margin: EdgeInsets.all(10),
+              margin: const EdgeInsets.all(10),
               padding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 20,
@@ -429,27 +429,27 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
             ),
           ),
           ListTile(
-            leading: Icon(Icons.menu_book_outlined),
+            leading: const Icon(Icons.menu_book_outlined),
             title: const Text('Bài học'),
             onTap: () {},
           ),
           ListTile(
-            leading: Icon(Icons.settings_outlined),
+            leading: const Icon(Icons.settings_outlined),
             title: const Text('Cài đặt'),
             onTap: () {},
           ),
           ListTile(
-            leading: Icon(Icons.email_outlined),
+            leading: const Icon(Icons.email_outlined),
             title: const Text('Email phản hồi'),
             onTap: () {},
           ),
           ListTile(
-            leading: Icon(Icons.share_outlined),
+            leading: const Icon(Icons.share_outlined),
             title: const Text('Chia sẻ'),
             onTap: () {},
           ),
           ListTile(
-            leading: Icon(Icons.person_outline),
+            leading: const Icon(Icons.person_outline),
             title: const Text('Giới thiệu'),
             onTap: () {},
           )
