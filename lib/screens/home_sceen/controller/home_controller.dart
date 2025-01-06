@@ -50,4 +50,18 @@ class HomeController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  //
+  // Future<void> getBibles(DateTime date) async {
+  //   try {
+  //     isLoading.value = true;
+  //     final response = await dataRepository.getBibles();
+  //     final item = response;
+  //     //bible.value = item;
+  //   } catch (e) {
+  //     debugPrint('Get bibles error ==> $e');
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
 }

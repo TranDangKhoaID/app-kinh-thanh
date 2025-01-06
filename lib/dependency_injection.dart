@@ -1,4 +1,4 @@
-import 'package:app_kinh_thanh/controller/network_controller.dart';
+import 'package:app_kinh_thanh/controllers/network_controller.dart';
 import 'package:app_kinh_thanh/locator.dart';
 import 'package:get/get.dart';
 

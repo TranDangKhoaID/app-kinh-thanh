@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:app_kinh_thanh/common/share_color.dart';
-import 'package:app_kinh_thanh/controller/network_controller.dart';
+import 'package:app_kinh_thanh/controllers/network_controller.dart';
+import 'package:app_kinh_thanh/main.dart';
+import 'package:app_kinh_thanh/models/bible_model.dart';
 import 'package:app_kinh_thanh/screens/home_sceen/controller/home_controller.dart';
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
@@ -20,6 +23,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
   //
   //
+  late Stream<List<BibleModel>> streamBible;
   final GlobalKey<ScaffoldState> _globalKey = GlobalKey();
   DateTime _date = DateTime(
     DateTime.now().year,
@@ -56,10 +60,13 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
   double _fontSize = 16;
   bool _showSlider = false;
   bool _showAudio = false;
+
   //
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) async {
     await _controller.getBibles(_date);
+    streamBible = objectBox.getBibles();
+
     final url = _controller.bible.value.audio ?? '';
     url.isNotEmpty
         ? player.setUrl(url)
@@ -100,19 +107,7 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
       backgroundColor: ShareColors.kWhite,
       appBar: _buildAppbar(),
       drawer: _buildDrawer(),
-      body: Obx(
-        () => _controllerConnect.isConnected.value
-            ? _buildBody()
-            : const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.wifi_off, size: 80),
-                    Text('Lỗi kết nối mạng!'),
-                  ],
-                ),
-              ),
-      ),
+      body: _buildNetwork(),
       bottomNavigationBar: Container(
         color: ShareColors.kPrimaryColor,
         height: 55,
@@ -175,7 +170,23 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
     );
   }
 
-  Stack _buildBody() {
+  Widget _buildNetwork() {
+    return Obx(
+      () => _controllerConnect.isConnected.value
+          ? _buildBodyNetwork()
+          : const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.wifi_off, size: 80),
+                  Text('Lỗi kết nối mạng!'),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Stack _buildBodyNetwork() {
     return Stack(
       children: [
         SingleChildScrollView(
@@ -204,136 +215,103 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
                     // if (_controller.bible.value) {
                     //   return Center(child: Text('No bibles available'));
                     // }
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 5),
-                      child: Column(
-                        children: [
-                          Container(
-                            alignment: Alignment.center,
-                            child: Text(
-                              '${_controller.bible.value.title}',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: _fontSize + 5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'Kinh thánh: ',
-                                  style: TextStyle(
-                                    fontSize: _fontSize,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: _controller.bible.value.bible ?? "",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: _fontSize,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'Câu gốc: ',
-                                  style: TextStyle(
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                    fontSize: _fontSize,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: _controller.bible.value.original ?? "",
-                                  style: TextStyle(
-                                    fontStyle: FontStyle.italic,
-                                    color: Colors.black,
-                                    fontSize: _fontSize,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'Câu hỏi suy ngẫm: ',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                    fontSize: _fontSize,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: _controller.bible.value.thought ?? "",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: _fontSize,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'Cầu nguyện: ',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                    fontSize: _fontSize,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: _controller.bible.value.pray ?? "",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: _fontSize,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'Đọc kinh thánh trong ba năm: ',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                    fontSize: _fontSize,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: _controller.bible.value.end ?? "",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: _fontSize,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    return BodyItemWidget(
+                      bible: _controller.bible.value,
+                      fontSize: _fontSize,
                     );
+                  },
+                )
+              ],
+            ),
+          ),
+        ),
+        // Thanh slider cố định
+        if (_showSlider)
+          Positioned(
+            top: 20, // Dưới app bar
+            left: 0,
+            right: 0,
+            child: Container(
+              color: Colors.blue, // Nền màu để slider nổi bật
+              margin: const EdgeInsets.all(10),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Slider(
+                value: _fontSize,
+                min: 10,
+                max: 50,
+                divisions: 40,
+                label: _fontSize.toStringAsFixed(0),
+                onChanged: (double value) {
+                  setState(() {
+                    _fontSize = value;
+                  });
+                },
+              ),
+            ),
+          ),
+        if (_showAudio)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 20,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: const EdgeInsets.all(10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 20,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: handlePlayPause,
+                    icon: Icon(
+                      player.playing ? Icons.pause : Icons.play_arrow,
+                      size: 50,
+                    ),
+                  ),
+                  Text(formatDuration(position)),
+                  Slider(
+                    min: 0.0,
+                    max: duration.inSeconds.toDouble(),
+                    value: position.inSeconds.toDouble(),
+                    onChanged: handleSeek,
+                  ),
+                  Text(formatDuration(duration)),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Stack _buildBodyLocal() {
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Ngày ${DateFormat('dd/MM/yyyy').format(_date)}',
+                    style: TextStyle(
+                      fontSize: _fontSize + 1,
+                    ),
+                  ),
+                ),
+                StreamBuilder<List<BibleModel>>(
+                  stream: streamBible,
+                  builder: (context, snapshot) {
+                    return Container();
                   },
                 )
               ],
@@ -429,8 +407,13 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.menu_book_outlined),
+            leading: const Icon(FontAwesomeIcons.bible),
             title: const Text('Bài học'),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: const Icon(FontAwesomeIcons.music),
+            title: const Text('Thánh ca'),
             onTap: () {},
           ),
           ListTile(
@@ -495,6 +478,152 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
           ),
         ),
       ],
+    );
+  }
+}
+
+class BodyItemWidget extends StatelessWidget {
+  const BodyItemWidget({
+    super.key,
+    required BibleModel bible,
+    required double fontSize,
+  })  : _bible = bible,
+        _fontSize = fontSize;
+
+  final BibleModel _bible;
+  final double _fontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      child: Column(
+        children: [
+          Container(
+            alignment: Alignment.center,
+            child: Text(
+              '${_bible.id}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: _fontSize + 5,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Kinh thánh: ',
+                  style: TextStyle(
+                    fontSize: _fontSize,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                TextSpan(
+                  text: _bible.bible ?? "",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: _fontSize,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 5),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Câu gốc: ',
+                  style: TextStyle(
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontSize: _fontSize,
+                  ),
+                ),
+                TextSpan(
+                  text: _bible.original ?? "",
+                  style: TextStyle(
+                    fontStyle: FontStyle.italic,
+                    color: Colors.black,
+                    fontSize: _fontSize,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Câu hỏi suy ngẫm: ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontSize: _fontSize,
+                  ),
+                ),
+                TextSpan(
+                  text: _bible.thought ?? "",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: _fontSize,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Cầu nguyện: ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontSize: _fontSize,
+                  ),
+                ),
+                TextSpan(
+                  text: _bible.pray ?? "",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: _fontSize,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Đọc kinh thánh trong ba năm: ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontSize: _fontSize,
+                  ),
+                ),
+                TextSpan(
+                  text: _bible.end ?? "",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: _fontSize,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

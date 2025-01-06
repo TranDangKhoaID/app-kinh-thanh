@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:app_kinh_thanh/routes.dart';
+import 'package:app_kinh_thanh/screens/splash_screen/controller/splash_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -13,6 +14,8 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> with AfterLayoutMixin {
+  //controller
+  final _controller = Get.put(SplashController());
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,11 +28,6 @@ class _SplashScreenState extends State<SplashScreen> with AfterLayoutMixin {
 
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) {
-    getConfigs();
-  }
-
-  /// Get configs
-  Future<void> getConfigs() async {
-    Get.offAllNamed(AppRoute.homeScreen);
+    _controller.getConfigs();
   }
 }
