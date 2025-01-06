@@ -65,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> with AfterLayoutMixin {
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) async {
     await _controller.getBibles(_date);
-    streamBible = objectBox.getBibles();
+    //streamBible = objectBox.getBibles();
 
     final url = _controller.bible.value.audio ?? '';
     url.isNotEmpty
